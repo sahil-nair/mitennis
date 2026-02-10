@@ -56,7 +56,7 @@ def wait_until_snipe_time():
 def run():
     with sync_playwright() as p:
         # headless=True for background running
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
 
@@ -103,14 +103,19 @@ def run():
             target_day = get_target_date_day()
             logging.info(f"Selecting Date: Day {target_day}")
             
-            # Open the calendar (Your code had a regex click, likely the calendar icon)
-            # page.get_by_role("link").filter(has_text=re.compile(r"^$")).click() 
-            # Use a more robust selector for the calendar icon if that regex fails
-            page.locator(".ui-datepicker-trigger").click() # Standard jQuery UI calendar trigger
+            # Try to open calendar using the "Link with no text" method (Playwright's generated code)
+            try:
+                # This matches the calendar icon which is often a link with an image but no text
+                page.get_by_role("link", name="", exact=True).first.click()
+            except:
+                # Fallback: Click the input field itself to trigger the calendar
+                page.click('input[id*="date"]')
+
+            time.sleep(1) # Wait for calendar to pop up
             
             # Click the day number
             page.get_by_role("link", name=target_day, exact=True).first.click()
-            time.sleep(1) # Allow date to set
+            time.sleep(1)
 
             # 6. SELECT TIME: 4:00 PM
             logging.info("Selecting Time: 4:00 PM...")
